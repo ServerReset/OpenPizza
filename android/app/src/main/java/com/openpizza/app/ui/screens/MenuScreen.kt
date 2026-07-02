@@ -65,6 +65,17 @@ fun MenuScreen(viewModel: MainViewModel, onNavigate: (String) -> Unit) {
         val filteredItems = selectedCategory?.let { viewModel.getMenuItemsByCategory(it) } ?: emptyList()
 
         if (selectedCategory != null) {
+            Row(
+                modifier = Modifier.padding(horizontal = 16.dp)
+            ) {
+                TextButton(onClick = { selectedCategory = null }) {
+                    Text(
+                        "\u2190 All Categories",
+                        style = MaterialTheme.typography.labelLarge
+                    )
+                }
+            }
+
             if (filteredItems.isEmpty()) {
                 Box(
                     modifier = Modifier.fillMaxSize(),

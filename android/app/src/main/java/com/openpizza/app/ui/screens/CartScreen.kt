@@ -6,6 +6,7 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -153,12 +154,15 @@ fun CartScreen(viewModel: MainViewModel, onNavigate: (String) -> Unit) {
                                     )
                                 }
                             }
-                            FilledTonalButton(
+                            IconButton(
                                 onClick = { viewModel.removeFromCart(index) },
-                                modifier = Modifier.size(32.dp),
-                                contentPadding = PaddingValues(0.dp)
+                                modifier = Modifier.size(32.dp)
                             ) {
-                                Text("X", style = MaterialTheme.typography.labelSmall)
+                                Icon(
+                                    Icons.Filled.Close,
+                                    contentDescription = "Remove item",
+                                    modifier = Modifier.size(18.dp)
+                                )
                             }
                         }
                         Spacer(Modifier.height(8.dp))

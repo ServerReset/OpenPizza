@@ -165,7 +165,9 @@ fun BuilderScreen(viewModel: MainViewModel, onNavigate: (String) -> Unit) {
                 shape = MaterialTheme.shapes.large
             ) {
                 Text(
-                    "Add to Cart",
+                    "Add to Cart \u2022 $${
+                        String.format("%.2f", viewModel.getBuilderPrice())
+                    }",
                     style = MaterialTheme.typography.labelLarge
                 )
             }

@@ -106,44 +106,18 @@ fun HomeScreen(viewModel: MainViewModel, onNavigate: (String) -> Unit) {
         if (cart.isNotEmpty()) {
             Spacer(modifier = Modifier.height(12.dp))
 
-            ElevatedCard(
+            FilledTonalButton(
                 onClick = { onNavigate("cart") },
                 modifier = Modifier.fillMaxWidth(),
-                elevation = CardDefaults.elevatedCardElevation(defaultElevation = 4.dp),
-                colors = CardDefaults.elevatedCardColors(
-                    containerColor = MaterialTheme.colorScheme.primaryContainer
-                ),
                 shape = MaterialTheme.shapes.large
             ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Column {
-                        Text(
-                            text = "${cart.size} item${if (cart.size != 1) "s" else ""} in cart",
-                            style = MaterialTheme.typography.titleMedium,
-                            color = MaterialTheme.colorScheme.onPrimaryContainer
-                        )
-                        Text(
-                            text = "View cart \u2192",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
-                        )
-                    }
-                    Text(
-                        text = "$${String.format("%.2f", viewModel.getCartTotal())}",
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer
-                    )
-                }
+                Text(
+                    "${cart.size} item${if (cart.size != 1) "s" else ""} in cart \u2022 $${
+                        String.format("%.2f", viewModel.getCartTotal())
+                    }",
+                    style = MaterialTheme.typography.labelLarge
+                )
             }
-
-            Spacer(modifier = Modifier.height(8.dp))
         }
     }
 }

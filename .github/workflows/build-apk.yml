@@ -68,7 +68,15 @@ jobs:
       - name: Build release APK
         run: ./gradlew assembleRelease
 
-      - name: Sign release APK with apksigner (v2+v3 signature)
+      - name: Set up Android SDK tools (zipalign + apksigner)
+        run: |
+          ANDROID_SDK=${ANDROID_SDK_ROOT:-$ANDROID_HOME}
+          echo "ANDROID_SDK=$ANDROID_SDK" >> $GITHUB_ENV
+          BT=$(ls -d $ANDROID_SDK/build-tools/* 2>/dev/null | sort -V | tail -1)
+          echo "BUILD_TOOLS=$BT" >> $GITHUB_ENV
+          echo "Using build-tools: $BT"
+
+      - name: Zipalign + apksigner sign release APK
         env:
           KEYSTORE_BASE64: ${{ secrets.SIGNING_KEYSTORE_BASE64 }}
           KEY_ALIAS: ${{ secrets.SIGNING_KEY_ALIAS }}
@@ -76,48 +84,62 @@ jobs:
           STORE_PASS: ${{ secrets.SIGNING_STORE_PASSWORD }}
         run: |
           cd app
-          APK="build/outputs/apk/release/app-release-unsigned.apk"
+          UNSIGNED="build/outputs/apk/release/app-release-unsigned.apk"
+          ALIGNED="build/outputs/apk/release/app-release-aligned.apk"
           SIGNED="build/outputs/apk/release/app-release-signed.apk"
 
-          # Find apksigner in Android SDK
-            ANDROID_SDK=${ANDROID_SDK_ROOT:-$ANDROID_HOME}
-          APKSIGNER=$(ls $ANDROID_SDK/build-tools/*/apksigner 2>/dev/null | head -1)
-          if [ -z "$APKSIGNER" ]; then
-            APKSIGNER=$(find / -name apksigner -type f 2>/dev/null | head -1)
-          fi
-          echo "Using apksigner at: $APKSIGNER"
+          ZIPALIGN="$BUILD_TOOLS/zipalign"
+          APKSIGNER="$BUILD_TOOLS/apksigner"
 
+          echo "ZIPALIGN=$ZIPALIGN"
+          echo "APKSIGNER=$APKSIGNER"
+
+          # Step 1: zipalign BEFORE signing (required for Android 12+)
+          "$ZIPALIGN" -p -f -v 4 "$UNSIGNED" "$ALIGNED"
+          echo "zipalign complete"
+
+          # Step 2: Generate or use keystore
           if [ -n "$KEYSTORE_BASE64" ]; then
             echo "$KEYSTORE_BASE64" | base64 --decode > keystore.jks
-            "$APKSIGNER" sign --ks keystore.jks \
-              --ks-pass "pass:$STORE_PASS" \
-              --key-pass "pass:$KEY_PASS" \
-              --ks-key-alias "$KEY_ALIAS" \
-              --v1-signing-enabled true \
-              --v2-signing-enabled true \
-              --v3-signing-enabled true \
-              "$APK"
-            rm -f keystore.jks
+            KS_PASS="$STORE_PASS"
+            KEY_P="$KEY_PASS"
+            ALIAS="$KEY_ALIAS"
           else
-            echo "No keystore secret set — generating a temporary one."
-            KEYSTORE_PASS="openpizza$(date +%s)"
-            KEY_PASS="openpizza$(date +%s)"
-            dname="CN=OpenPizza, OU=Dev, O=OpenPizza, L=Unknown, ST=Unknown, C=US"
-            keytool -genkey -v -keystore keystore.jks -alias openpizza \
+            echo "No keystore secret — generating temporary one."
+            KS_PASS="openpizza$(date +%s)"
+            KEY_P="openpizza$(date +%s)"
+            ALIAS="openpizza"
+            keytool -genkey -v -keystore keystore.jks -alias "$ALIAS" \
               -keyalg RSA -keysize 2048 -validity 10000 \
-              -storepass "$KEYSTORE_PASS" -keypass "$KEY_PASS" -dname "$dname"
-            "$APKSIGNER" sign --ks keystore.jks \
-              --ks-pass "pass:$KEYSTORE_PASS" \
-              --key-pass "pass:$KEY_PASS" \
-              --ks-key-alias openpizza \
-              --v1-signing-enabled true \
-              --v2-signing-enabled true \
-              --v3-signing-enabled true \
-              "$APK"
-            rm -f keystore.jks
+              -storepass "$KS_PASS" -keypass "$KEY_P" \
+              -dname "CN=OpenPizza, OU=Dev, O=OpenPizza, L=Unknown, ST=Unknown, C=US"
           fi
 
-          cp "$APK" "$SIGNED"
+          # Step 3: Sign with apksigner (v1+v2+v3)
+          "$APKSIGNER" sign --ks keystore.jks \
+            --ks-pass "pass:$KS_PASS" \
+            --key-pass "pass:$KEY_P" \
+            --ks-key-alias "$ALIAS" \
+            --v1-signing-enabled true \
+            --v2-signing-enabled true \
+            --v3-signing-enabled true \
+            "$ALIGNED"
+
+          rm -f keystore.jks
+
+          # Step 4: Copy as signed output
+          cp "$ALIGNED" "$SIGNED"
+
+          # Step 5: Verify the signature
+          echo "=== Signature Verification ==="
+          "$APKSIGNER" verify --verbose "$SIGNED" || echo "VERIFY FAILED"
+          echo "=== Verification Complete ==="
+
+      - name: Print APK file info
+        run: |
+          ls -lh android/app/build/outputs/apk/release/
+          echo "---"
+          unzip -l android/app/build/outputs/apk/release/app-release-signed.apk | grep resources.arsc || echo "resources.arsc not found (minified)"
 
       - name: Upload release APK as artifact
         uses: actions/upload-artifact@v4
