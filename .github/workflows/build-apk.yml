@@ -68,26 +68,46 @@ jobs:
       - name: Build release APK
         run: ./gradlew assembleRelease
 
-      - name: Sign release APK
-        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+      - name: Generate keystore and sign release APK
         env:
-          SIGNING_KEYSTORE_BASE64: ${{ secrets.SIGNING_KEYSTORE_BASE64 }}
-          SIGNING_KEY_ALIAS: ${{ secrets.SIGNING_KEY_ALIAS }}
-          SIGNING_KEY_PASSWORD: ${{ secrets.SIGNING_KEY_PASSWORD }}
-          SIGNING_STORE_PASSWORD: ${{ secrets.SIGNING_STORE_PASSWORD }}
+          KEYSTORE_BASE64: ${{ secrets.SIGNING_KEYSTORE_BASE64 }}
+          KEY_ALIAS: ${{ secrets.SIGNING_KEY_ALIAS }}
+          KEY_PASS: ${{ secrets.SIGNING_KEY_PASSWORD }}
+          STORE_PASS: ${{ secrets.SIGNING_STORE_PASSWORD }}
         run: |
-          if [ -n "$SIGNING_KEYSTORE_BASE64" ]; then
-            echo "$SIGNING_KEYSTORE_BASE64" | base64 --decode > keystore.jks
-            jarsigner -verbose \
-              -sigalg SHA256withRSA \
-              -digestalg SHA-256 \
-              -keystore keystore.jks \
-              -storepass "$SIGNING_STORE_PASSWORD" \
-              -keypass "$SIGNING_KEY_PASSWORD" \
-              app/build/outputs/apk/release/*.apk \
-              "$SIGNING_KEY_ALIAS"
+          cd app
+          APK="build/outputs/apk/release/app-release-unsigned.apk"
+          SIGNED="build/outputs/apk/release/app-release-signed.apk"
+
+          if [ -n "$KEYSTORE_BASE64" ]; then
+            echo "$KEYSTORE_BASE64" | base64 --decode > keystore.jks
+            jarsigner -verbose -sigalg SHA256withRSA -digestalg SHA-256 \
+              -keystore keystore.jks -storepass "$STORE_PASS" -keypass "$KEY_PASS" \
+              "$APK" "$KEY_ALIAS"
+            rm -f keystore.jks
+          else
+            echo "No keystore secret set — generating a temporary one."
+            KEYSTORE_PASS="openpizza$(date +%s)"
+            KEY_PASS="openpizza$(date +%s)"
+            dname="CN=OpenPizza, OU=Dev, O=OpenPizza, L=Unknown, ST=Unknown, C=US"
+            keytool -genkey -v -keystore keystore.jks -alias openpizza \
+              -keyalg RSA -keysize 2048 -validity 10000 \
+              -storepass "$KEYSTORE_PASS" -keypass "$KEY_PASS" -dname "$dname"
+            jarsigner -verbose -sigalg SHA256withRSA -digestalg SHA-256 \
+              -keystore keystore.jks -storepass "$KEYSTORE_PASS" -keypass "$KEY_PASS" \
+              "$APK" openpizza
             rm -f keystore.jks
           fi
+
+          ANDROID_SDK=${ANDROID_SDK_ROOT:-$ANDROID_HOME}
+          ZIPALIGN="$ANDROID_SDK/build-tools/*/zipalign"
+          ZIPALIGN=$(ls $ANDROID_SDK/build-tools/*/zipalign 2>/dev/null | head -1)
+          if [ -n "$ZIPALIGN" ]; then
+            "$ZIPALIGN" -f -v 4 "$APK" "$SIGNED"
+          else
+            cp "$APK" "$SIGNED"
+          fi
+          rm -f "$APK"
 
       - name: Upload release APK as artifact
         uses: actions/upload-artifact@v4
@@ -97,7 +117,11 @@ jobs:
           retention-days: 30
           if-no-files-found: warn
 
-      - name: Create GitHub Release (on tag or main push)
+      - name: Rename debug APK for install compatibility
+        run: |
+          cp app/build/outputs/apk/debug/app-debug.apk app/build/outputs/apk/debug/OpenPizza-debug.apk
+
+      - name: Create GitHub Release
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
         uses: softprops/action-gh-release@v2
         with:
@@ -111,20 +135,20 @@ jobs:
             **Commit:** ${{ github.sha }}
             **Branch:** ${{ github.ref_name }}
 
-            ### Download
-            - [Debug APK](./openpizza-debug-apk) (unsigned, for testing)
-            - [Release APK](./openpizza-release-apk) (signed if keystore configured)
+            ### Download & Install
+            Download the **release APK** — it's signed and ready to install.
 
             ### How to install
-            1. Download the APK from the artifacts section above
-            2. Enable "Install from unknown sources" on your device
-            3. Open the APK file to install
+            1. Download `app-release-signed.apk` from the release assets below
+            2. On your phone, open the downloaded file
+            3. Tap "Install anyway" if Play Protect warns you
+            4. Enjoy!
 
-            > Note: You need the Express backend server running at the same time.
-            > The Android app connects to `http://10.0.2.2:3000` (emulator) or your machine's IP.
+            > ⚠️ The app needs the Express backend server running.
+            > The Android app connects to `http://10.0.2.2:3000` (emulator) or your machine's LAN IP.
           files: |
-            android/app/build/outputs/apk/debug/*.apk
             android/app/build/outputs/apk/release/*.apk
+            android/app/build/outputs/apk/debug/OpenPizza-debug.apk
           fail_on_unmatched_files: false
           generate_release_notes: false
           prerelease: true
@@ -133,7 +157,7 @@ jobs:
         run: |
           echo "## Build Summary" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "| Artifact | Status |" >> $GITHUB_STEP_SUMMARY
-          echo "|----------|--------|" >> $GITHUB_STEP_SUMMARY
-          echo "| Debug APK | ✅ Built |" >> $GITHUB_STEP_SUMMARY
-          echo "| Release APK | ✅ Built |" >> $GITHUB_STEP_SUMMARY
+          echo "| Artifact | Size | Signed? |" >> $GITHUB_STEP_SUMMARY
+          echo "|----------|------|---------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Release APK | $(du -h android/app/build/outputs/apk/release/app-release-signed.apk | cut -f1) | ✅ Yes |" >> $GITHUB_STEP_SUMMARY
+          echo "| Debug APK | $(du -h android/app/build/outputs/apk/debug/app-debug.apk | cut -f1) | ✅ Yes (debug key) |" >> $GITHUB_STEP_SUMMARY
