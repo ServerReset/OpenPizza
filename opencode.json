@@ -1,0 +1,48 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+
+  "references": {
+    "repo": {
+      "description": "Use for OpenPizza project context and implementation details"
+    },
+    "android": {
+      "path": "android",
+      "description": "Android app source code, Gradle config, Jetpack Compose UI"
+    },
+    "server": {
+      "path": "server.js",
+      "description": "Express backend that proxies calls to the Dominos API"
+    },
+    "workflows": {
+      "path": ".github/workflows",
+      "description": "GitHub Actions CI/CD for building and releasing APKs"
+    }
+  },
+
+  "command": {
+    "server": {
+      "description": "Start the Express API backend",
+      "template": "node server.js"
+    },
+    "build-android": {
+      "description": "Build the Android app (requires Android SDK)",
+      "template": "cd android && ./gradlew assembleDebug"
+    }
+  },
+
+  "mcp": {
+    "github": {
+      "type": "local",
+      "command": ["npx", "-y", "@modelcontextprotocol/server-github"],
+      "enabled": true,
+      "env": {
+        "GITHUB_TOKEN": "{env:GITHUB_TOKEN}"
+      }
+    }
+  },
+
+  "permission": {
+    "bash": { "git *": "allow", "*": "ask" },
+    "external_directory": { "*": "allow" }
+  }
+}

@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>OpenPizza</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🍕</text></svg>">
+  <link rel="stylesheet" href="/css/theme.css">
+  <link rel="stylesheet" href="/css/styles.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <header class="app-bar" id="appBar">
+    <a class="logo" href="#" onclick="navigate('home')">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+      OpenPizza
+    </a>
+    <span class="spacer"></span>
+    <button class="menu-btn" onclick="navigate('profile')" aria-label="Profile">
+      <svg viewBox="0 0 24 24" fill="currentColor" width="24" height="24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+    </button>
+  </header>
+
+  <main class="main-content" id="mainContent">
+
+    <section class="page active" id="page-home">
+      <div style="text-align:center;padding:24px 0 16px">
+        <div style="font-size:64px;line-height:1">🍕</div>
+        <h1 style="margin-top:8px">OpenPizza</h1>
+        <p style="color:var(--md-sys-color-on-surface-variant);font:var(--md-sys-typescale-body-large);max-width:320px;margin:8px auto 0">Fresh, hot pizza delivered to your door</p>
+      </div>
+      <h2 class="section-title">Get Started</h2>
+      <div class="grid-2">
+        <div class="m3-card menu-cat-card" onclick="navigate('stores')">
+          <span class="icon">📍</span>
+          <span class="name">Find a Store</span>
+          <span class="desc">Locate nearby Dominos</span>
+        </div>
+        <div class="m3-card menu-cat-card" onclick="navigate('menu')">
+          <span class="icon">📋</span>
+          <span class="name">Browse Menu</span>
+          <span class="desc">View full menu</span>
+        </div>
+        <div class="m3-card menu-cat-card" onclick="navigate('builder')">
+          <span class="icon">🎨</span>
+          <span class="name">Pizza Builder</span>
+          <span class="desc">Create your own pizza</span>
+        </div>
+        <div class="m3-card menu-cat-card" onclick="navigate('tracking')">
+          <span class="icon">📦</span>
+          <span class="name">Track Order</span>
+          <span class="desc">Check your order status</span>
+        </div>
+      </div>
+      <div id="home-cart-preview" style="display:none;margin-top:16px">
+        <div class="m3-card" style="display:flex;align-items:center;gap:12px;cursor:pointer" onclick="navigate('cart')">
+          <span style="font-size:28px">🛒</span>
+          <div style="flex:1">
+            <div style="font:var(--md-sys-typescale-title-small)">View Cart</div>
+            <div style="font:var(--md-sys-typescale-body-small);color:var(--md-sys-color-on-surface-variant)" id="home-cart-count">0 items</div>
+          </div>
+          <span style="font:var(--md-sys-typescale-title-medium);color:var(--md-sys-color-primary)" id="home-cart-total">$0.00</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="page" id="page-stores">
+      <h2 class="section-title" style="margin-top:0">Find a Store</h2>
+      <div class="search-bar">
+        <input type="text" id="storeSearch" placeholder="Enter address or ZIP code" onkeydown="if(event.key==='Enter')searchStores()">
+        <button class="m3-btn filled" onclick="searchStores()">Search</button>
+      </div>
+      <div id="stores-results"></div>
+      <div class="empty-state" id="stores-empty">
+        <span class="icon">📍</span>
+        <span class="text">Enter your address to find nearby stores</span>
+      </div>
+    </section>
+
+    <section class="page" id="page-menu">
+      <h2 class="section-title" style="margin-top:0">Menu</h2>
+      <div id="menu-categories" class="grid-3"></div>
+      <div id="menu-items" style="margin-top:16px"></div>
+      <button class="m3-btn text" onclick="showMenuCategories()" id="menu-back-btn" style="display:none;margin-bottom:16px">← All Categories</button>
+    </section>
+
+    <section class="page" id="page-builder">
+      <h2 class="section-title" style="margin-top:0">Pizza Builder</h2>
+      <p style="color:var(--md-sys-color-on-surface-variant);margin-bottom:16px">Customize your perfect pizza</p>
+
+      <div class="builder-section">
+        <h3>Choose a Store</h3>
+        <div class="search-bar">
+          <input type="text" id="builderStore" placeholder="ZIP code for store lookup" onkeydown="if(event.key==='Enter')loadBuilderStore()">
+          <button class="m3-btn filled" onclick="loadBuilderStore()">Find</button>
+        </div>
+        <div id="builder-store-select"></div>
+      </div>
+
+      <div id="builder-crust" class="builder-section" style="display:none">
+        <h3>Crust Style</h3>
+        <div class="m3-chips" id="builder-crust-options"></div>
+      </div>
+
+      <div id="builder-size" class="builder-section" style="display:none">
+        <h3>Size</h3>
+        <div class="m3-chips" id="builder-size-options"></div>
+      </div>
+
+      <div id="builder-sauce" class="builder-section" style="display:none">
+        <h3>Sauce</h3>
+        <div class="m3-chips" id="builder-sauce-options"></div>
+      </div>
+
+      <div id="builder-cheese" class="builder-section" style="display:none">
+        <h3>Cheese</h3>
+        <div class="m3-chips" id="builder-cheese-options"></div>
+      </div>
+
+      <div id="builder-toppings" class="builder-section" style="display:none">
+        <h3>Toppings</h3>
+        <div class="m3-chips" id="builder-topping-options"></div>
+      </div>
+
+      <div id="builder-summary" style="display:none;margin-top:16px">
+        <div class="m3-card">
+          <div style="font:var(--md-sys-typescale-title-small);margin-bottom:8px">Your Pizza</div>
+          <div id="builder-summary-text" style="font:var(--md-sys-typescale-body-medium);color:var(--md-sys-color-on-surface-variant)"></div>
+          <div style="margin-top:12px;display:flex;gap:8px;align-items:center">
+            <button class="m3-btn filled" onclick="addBuilderToCart()">Add to Cart</button>
+            <span style="font:var(--md-sys-typescale-title-medium);color:var(--md-sys-color-primary)" id="builder-est-price"></span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="page" id="page-cart">
+      <h2 class="section-title" style="margin-top:0">Your Cart</h2>
+      <div id="cart-items"></div>
+      <div class="empty-state" id="cart-empty">
+        <span class="icon">🛒</span>
+        <span class="text">Your cart is empty</span>
+        <button class="m3-btn tonal" onclick="navigate('menu')">Browse Menu</button>
+        <button class="m3-btn text" onclick="navigate('builder')">Build a Pizza</button>
+      </div>
+      <div id="cart-checkout" style="display:none">
+        <div class="order-summary" id="cart-summary"></div>
+        <h3 class="section-title">Delivery Details</h3>
+        <div class="m3-field">
+          <label>Address</label>
+          <input type="text" id="checkout-address" placeholder="Street address">
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+          <div class="m3-field">
+            <label>City</label>
+            <input type="text" id="checkout-city" placeholder="City">
+          </div>
+          <div class="m3-field">
+            <label>State</label>
+            <input type="text" id="checkout-state" placeholder="State">
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+          <div class="m3-field">
+            <label>ZIP Code</label>
+            <input type="text" id="checkout-zip" placeholder="ZIP">
+          </div>
+          <div class="m3-field">
+            <label>Phone</label>
+            <input type="tel" id="checkout-phone" placeholder="Phone">
+          </div>
+        </div>
+        <h3 class="section-title">Payment</h3>
+        <div class="m3-field">
+          <label>Card Number</label>
+          <input type="text" id="checkout-card" placeholder="Card number" maxlength="19">
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px">
+          <div class="m3-field">
+            <label>Expiry</label>
+            <input type="text" id="checkout-expiry" placeholder="MM/YY">
+          </div>
+          <div class="m3-field">
+            <label>CVV</label>
+            <input type="text" id="checkout-cvv" placeholder="CVV" maxlength="4">
+          </div>
+          <div class="m3-field">
+            <label>ZIP</label>
+            <input type="text" id="checkout-card-zip" placeholder="ZIP">
+          </div>
+        </div>
+        <div class="m3-field">
+          <label>Tip Amount ($)</label>
+          <input type="number" id="checkout-tip" placeholder="0.00" step="0.50" min="0">
+        </div>
+        <button class="m3-btn filled large" style="width:100%;margin-top:8px" onclick="placeOrder()">Place Order</button>
+      </div>
+    </section>
+
+    <section class="page" id="page-tracking">
+      <h2 class="section-title" style="margin-top:0">Track Your Order</h2>
+      <div class="search-bar">
+        <input type="tel" id="track-phone" placeholder="Enter your phone number" onkeydown="if(event.key==='Enter')trackOrder()">
+        <button class="m3-btn filled" onclick="trackOrder()">Track</button>
+      </div>
+      <div id="tracking-result"></div>
+      <div class="empty-state" id="tracking-empty">
+        <span class="icon">📦</span>
+        <span class="text">Enter your phone number to track your order</span>
+      </div>
+    </section>
+
+    <section class="page" id="page-profile">
+      <h2 class="section-title" style="margin-top:0">Your Profile</h2>
+      <div class="profile-form">
+        <div class="avatar">👤</div>
+        <div class="m3-field">
+          <label>First Name</label>
+          <input type="text" id="prof-first" placeholder="First name">
+        </div>
+        <div class="m3-field">
+          <label>Last Name</label>
+          <input type="text" id="prof-last" placeholder="Last name">
+        </div>
+        <div class="m3-field">
+          <label>Email</label>
+          <input type="email" id="prof-email" placeholder="email@example.com">
+        </div>
+        <div class="m3-field">
+          <label>Phone</label>
+          <input type="tel" id="prof-phone" placeholder="Phone number">
+        </div>
+        <div class="m3-field">
+          <label>Default Address</label>
+          <input type="text" id="prof-address" placeholder="Street address">
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+          <div class="m3-field">
+            <label>City</label>
+            <input type="text" id="prof-city" placeholder="City">
+          </div>
+          <div class="m3-field">
+            <label>State</label>
+            <input type="text" id="prof-state" placeholder="State">
+          </div>
+        </div>
+        <div class="m3-field">
+          <label>ZIP Code</label>
+          <input type="text" id="prof-zip" placeholder="ZIP code">
+        </div>
+        <button class="m3-btn filled large" style="width:100%" onclick="saveProfile()">Save Profile</button>
+        <div id="profile-saved" style="display:none;margin-top:12px" class="success-banner">Profile saved!</div>
+      </div>
+    </section>
+
+  </main>
+
+  <nav class="nav-bar" id="navBar">
+    <button class="nav-item active" onclick="navigate('home')" data-page="home">
+      <span class="icon">🍕</span>
+      <span class="label">Home</span>
+    </button>
+    <button class="nav-item" onclick="navigate('menu')" data-page="menu">
+      <span class="icon">📋</span>
+      <span class="label">Menu</span>
+    </button>
+    <button class="nav-item" onclick="navigate('builder')" data-page="builder">
+      <span class="icon">🎨</span>
+      <span class="label">Build</span>
+    </button>
+    <button class="nav-item" onclick="navigate('cart')" data-page="cart">
+      <span class="icon">🛒</span>
+      <span class="label">Cart</span>
+    </button>
+    <button class="nav-item" onclick="navigate('tracking')" data-page="tracking">
+      <span class="icon">📦</span>
+      <span class="label">Track</span>
+    </button>
+  </nav>
+
+  <button class="fab" id="cartFab" onclick="navigate('cart')" style="display:none">
+    🛒
+    <span class="badge" id="cartBadge">0</span>
+  </button>
+
+  <script src="/js/api.js"></script>
+  <script src="/js/app.js"></script>
+</body>
+</html>
