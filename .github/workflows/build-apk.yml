@@ -136,12 +136,12 @@ jobs:
           echo "=== Verification Complete ==="
 
       - name: Print APK file info
+        continue-on-error: true
         run: |
-          ls -lh android/app/build/outputs/apk/release/
-          echo "---"
-          unzip -l android/app/build/outputs/apk/release/app-release-signed.apk | grep resources.arsc || echo "resources.arsc not found (minified)"
+          ls -lh app/build/outputs/apk/release/
 
       - name: Upload release APK as artifact
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: openpizza-release-apk
@@ -150,6 +150,7 @@ jobs:
           if-no-files-found: warn
 
       - name: Rename debug APK for install compatibility
+        if: always()
         run: |
           cp app/build/outputs/apk/debug/app-debug.apk app/build/outputs/apk/debug/OpenPizza-debug.apk
 
@@ -186,6 +187,7 @@ jobs:
           prerelease: true
 
       - name: Summarize build
+        if: always()
         run: |
           echo "## Build Summary" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
