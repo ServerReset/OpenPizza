@@ -1,47 +1,19 @@
-@file:OptIn(ExperimentalMaterial3Api::class)
-
 package com.openpizza.app.ui.screens
 
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Button
-import androidx.compose.material3.FilledTonalButton
-import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Remove
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.openpizza.app.data.model.CustomerRequest
 import com.openpizza.app.data.model.PaymentInfo
 import com.openpizza.app.viewmodel.MainViewModel
@@ -84,18 +56,21 @@ fun CartScreen(viewModel: MainViewModel, onNavigate: (String) -> Unit) {
                 item {
                     Card(
                         modifier = Modifier.fillMaxWidth(),
-                        colors = CardDefaults.cardColors(containerColor = Color(0xFF4CAF50))
+                        colors = CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.tertiaryContainer
+                        ),
+                        shape = MaterialTheme.shapes.large
                     ) {
                         Row(
                             modifier = Modifier.padding(16.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Text(text = "\uD83C\uDF89", fontSize = 24.sp)
+                            Text(text = "\uD83C\uDF89", style = MaterialTheme.typography.headlineSmall)
                             Spacer(Modifier.width(8.dp))
                             Text(
                                 "Order placed successfully!",
                                 style = MaterialTheme.typography.titleMedium,
-                                color = Color.White
+                                color = MaterialTheme.colorScheme.onTertiaryContainer
                             )
                         }
                     }
@@ -103,21 +78,41 @@ fun CartScreen(viewModel: MainViewModel, onNavigate: (String) -> Unit) {
             }
 
             item {
-                Text("Your Cart", style = MaterialTheme.typography.headlineSmall)
+                Text(
+                    "Your Cart",
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
             }
 
             if (cart.isEmpty()) {
                 item {
                     Column(
-                        modifier = Modifier.fillMaxWidth().padding(vertical = 48.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 48.dp),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        Text("\uD83D\uDED2", fontSize = 48.sp)
-                        Spacer(Modifier.height(8.dp))
+                        Surface(
+                            shape = MaterialTheme.shapes.extraLarge,
+                            color = MaterialTheme.colorScheme.surfaceContainerHigh,
+                            modifier = Modifier.size(80.dp)
+                        ) {
+                            Box(contentAlignment = Alignment.Center) {
+                                Text("\uD83D\uDED2", style = MaterialTheme.typography.displayMedium)
+                            }
+                        }
+                        Spacer(Modifier.height(12.dp))
                         Text(
                             "Your cart is empty",
-                            style = MaterialTheme.typography.bodyLarge,
+                            style = MaterialTheme.typography.titleMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Text(
+                            "Browse the menu to add items",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
                         )
                     }
                 }
@@ -126,7 +121,10 @@ fun CartScreen(viewModel: MainViewModel, onNavigate: (String) -> Unit) {
             itemsIndexed(cart) { index, item ->
                 Card(
                     modifier = Modifier.fillMaxWidth(),
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHighest)
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceContainerHighest
+                    ),
+                    shape = MaterialTheme.shapes.large
                 ) {
                     Column(modifier = Modifier.padding(12.dp)) {
                         Row(
@@ -138,7 +136,7 @@ fun CartScreen(viewModel: MainViewModel, onNavigate: (String) -> Unit) {
                                 Text(
                                     item.name,
                                     style = MaterialTheme.typography.titleMedium,
-                                    fontWeight = FontWeight.Bold
+                                    fontWeight = FontWeight.SemiBold
                                 )
                                 if (item.toppings.isNotBlank()) {
                                     Text(
@@ -157,10 +155,10 @@ fun CartScreen(viewModel: MainViewModel, onNavigate: (String) -> Unit) {
                             }
                             FilledTonalButton(
                                 onClick = { viewModel.removeFromCart(index) },
-                                modifier = Modifier.size(36.dp),
+                                modifier = Modifier.size(32.dp),
                                 contentPadding = PaddingValues(0.dp)
                             ) {
-                                Text("X", fontSize = 12.sp)
+                                Text("X", style = MaterialTheme.typography.labelSmall)
                             }
                         }
                         Spacer(Modifier.height(8.dp))
@@ -176,7 +174,11 @@ fun CartScreen(viewModel: MainViewModel, onNavigate: (String) -> Unit) {
                                     contentPadding = PaddingValues(0.dp),
                                     enabled = item.qty > 1
                                 ) {
-                                    Text("-", fontSize = 16.sp)
+                                    Icon(
+                                        Icons.Filled.Remove,
+                                        contentDescription = "Decrease quantity",
+                                        modifier = Modifier.size(16.dp)
+                                    )
                                 }
                                 Text(
                                     "${item.qty}",
@@ -188,7 +190,11 @@ fun CartScreen(viewModel: MainViewModel, onNavigate: (String) -> Unit) {
                                     modifier = Modifier.size(36.dp),
                                     contentPadding = PaddingValues(0.dp)
                                 ) {
-                                    Text("+", fontSize = 16.sp)
+                                    Icon(
+                                        Icons.Filled.Add,
+                                        contentDescription = "Increase quantity",
+                                        modifier = Modifier.size(16.dp)
+                                    )
                                 }
                             }
                             Text(
@@ -205,7 +211,10 @@ fun CartScreen(viewModel: MainViewModel, onNavigate: (String) -> Unit) {
                 item {
                     Card(
                         modifier = Modifier.fillMaxWidth(),
-                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHighest)
+                        colors = CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.surfaceContainerHighest
+                        ),
+                        shape = MaterialTheme.shapes.large
                     ) {
                         Column(modifier = Modifier.padding(16.dp)) {
                             Row(
@@ -227,7 +236,11 @@ fun CartScreen(viewModel: MainViewModel, onNavigate: (String) -> Unit) {
                                 modifier = Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.SpaceBetween
                             ) {
-                                Text("Total", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                                Text(
+                                    "Total",
+                                    style = MaterialTheme.typography.titleLarge,
+                                    fontWeight = FontWeight.Bold
+                                )
                                 Text(
                                     "\$${"%.2f".format(grandTotal)}",
                                     style = MaterialTheme.typography.titleLarge,
@@ -239,100 +252,132 @@ fun CartScreen(viewModel: MainViewModel, onNavigate: (String) -> Unit) {
                 }
 
                 item {
-                    Text("Place Order", style = MaterialTheme.typography.titleLarge)
+                    Text(
+                        "Place Order",
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold
+                    )
                 }
 
                 item {
-                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        OutlinedTextField(
-                            value = address,
-                            onValueChange = { address = it },
-                            label = { Text("Address") },
-                            modifier = Modifier.fillMaxWidth(),
-                            singleLine = true
-                        )
-                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = MaterialTheme.shapes.large
+                    ) {
+                        Column(
+                            modifier = Modifier.padding(16.dp),
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
                             OutlinedTextField(
-                                value = city,
-                                onValueChange = { city = it },
-                                label = { Text("City") },
-                                modifier = Modifier.weight(1f),
-                                singleLine = true
-                            )
-                            OutlinedTextField(
-                                value = state,
-                                onValueChange = { state = it },
-                                label = { Text("State") },
-                                modifier = Modifier.width(80.dp),
-                                singleLine = true
-                            )
-                            OutlinedTextField(
-                                value = zip,
-                                onValueChange = { zip = it },
-                                label = { Text("ZIP") },
-                                modifier = Modifier.width(100.dp),
+                                value = address,
+                                onValueChange = { address = it },
+                                label = { Text("Address") },
+                                modifier = Modifier.fillMaxWidth(),
                                 singleLine = true,
-                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                                shape = MaterialTheme.shapes.medium
+                            )
+                            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                OutlinedTextField(
+                                    value = city,
+                                    onValueChange = { city = it },
+                                    label = { Text("City") },
+                                    modifier = Modifier.weight(1f),
+                                    singleLine = true,
+                                    shape = MaterialTheme.shapes.medium
+                                )
+                                OutlinedTextField(
+                                    value = state,
+                                    onValueChange = { state = it },
+                                    label = { Text("State") },
+                                    modifier = Modifier.width(80.dp),
+                                    singleLine = true,
+                                    shape = MaterialTheme.shapes.medium
+                                )
+                                OutlinedTextField(
+                                    value = zip,
+                                    onValueChange = { zip = it },
+                                    label = { Text("ZIP") },
+                                    modifier = Modifier.width(100.dp),
+                                    singleLine = true,
+                                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                                    shape = MaterialTheme.shapes.medium
+                                )
+                            }
+                            OutlinedTextField(
+                                value = phone,
+                                onValueChange = { phone = it },
+                                label = { Text("Phone") },
+                                modifier = Modifier.fillMaxWidth(),
+                                singleLine = true,
+                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
+                                shape = MaterialTheme.shapes.medium
+                            )
+                            OutlinedTextField(
+                                value = storeId,
+                                onValueChange = { storeId = it },
+                                label = { Text("Store ID") },
+                                modifier = Modifier.fillMaxWidth(),
+                                singleLine = true,
+                                enabled = false,
+                                shape = MaterialTheme.shapes.medium
+                            )
+
+                            HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
+
+                            Text(
+                                "Payment",
+                                style = MaterialTheme.typography.titleSmall,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+
+                            OutlinedTextField(
+                                value = cardNumber,
+                                onValueChange = { cardNumber = it },
+                                label = { Text("Card Number") },
+                                modifier = Modifier.fillMaxWidth(),
+                                singleLine = true,
+                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                                shape = MaterialTheme.shapes.medium
+                            )
+                            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                OutlinedTextField(
+                                    value = cardExpiry,
+                                    onValueChange = { cardExpiry = it },
+                                    label = { Text("Expiry (MM/YY)") },
+                                    modifier = Modifier.weight(1f),
+                                    singleLine = true,
+                                    shape = MaterialTheme.shapes.medium
+                                )
+                                OutlinedTextField(
+                                    value = cardCvv,
+                                    onValueChange = { cardCvv = it },
+                                    label = { Text("CVV") },
+                                    modifier = Modifier.width(80.dp),
+                                    singleLine = true,
+                                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                                    shape = MaterialTheme.shapes.medium
+                                )
+                            }
+                            OutlinedTextField(
+                                value = cardZip,
+                                onValueChange = { cardZip = it },
+                                label = { Text("Card ZIP") },
+                                modifier = Modifier.fillMaxWidth(),
+                                singleLine = true,
+                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                                shape = MaterialTheme.shapes.medium
+                            )
+                            OutlinedTextField(
+                                value = tipAmount,
+                                onValueChange = { tipAmount = it },
+                                label = { Text("Tip Amount") },
+                                modifier = Modifier.fillMaxWidth(),
+                                singleLine = true,
+                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                                shape = MaterialTheme.shapes.medium
                             )
                         }
-                        OutlinedTextField(
-                            value = phone,
-                            onValueChange = { phone = it },
-                            label = { Text("Phone") },
-                            modifier = Modifier.fillMaxWidth(),
-                            singleLine = true,
-                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone)
-                        )
-                        OutlinedTextField(
-                            value = storeId,
-                            onValueChange = { storeId = it },
-                            label = { Text("Store ID") },
-                            modifier = Modifier.fillMaxWidth(),
-                            singleLine = true,
-                            enabled = false
-                        )
-                        HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
-                        OutlinedTextField(
-                            value = cardNumber,
-                            onValueChange = { cardNumber = it },
-                            label = { Text("Card Number") },
-                            modifier = Modifier.fillMaxWidth(),
-                            singleLine = true,
-                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
-                        )
-                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            OutlinedTextField(
-                                value = cardExpiry,
-                                onValueChange = { cardExpiry = it },
-                                label = { Text("Expiry (MM/YY)") },
-                                modifier = Modifier.weight(1f),
-                                singleLine = true
-                            )
-                            OutlinedTextField(
-                                value = cardCvv,
-                                onValueChange = { cardCvv = it },
-                                label = { Text("CVV") },
-                                modifier = Modifier.width(80.dp),
-                                singleLine = true,
-                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
-                            )
-                        }
-                        OutlinedTextField(
-                            value = cardZip,
-                            onValueChange = { cardZip = it },
-                            label = { Text("Card ZIP") },
-                            modifier = Modifier.fillMaxWidth(),
-                            singleLine = true,
-                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
-                        )
-                        OutlinedTextField(
-                            value = tipAmount,
-                            onValueChange = { tipAmount = it },
-                            label = { Text("Tip Amount") },
-                            modifier = Modifier.fillMaxWidth(),
-                            singleLine = true,
-                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
-                        )
                     }
                 }
 
@@ -355,8 +400,11 @@ fun CartScreen(viewModel: MainViewModel, onNavigate: (String) -> Unit) {
                             )
                             viewModel.placeOrder(customer, storeId, payment)
                         },
-                        modifier = Modifier.fillMaxWidth().height(52.dp),
-                        enabled = !orderLoading && orderResult?.placed != true
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(52.dp),
+                        enabled = !orderLoading && orderResult?.placed != true,
+                        shape = MaterialTheme.shapes.large
                     ) {
                         if (orderLoading) {
                             CircularProgressIndicator(
@@ -365,7 +413,10 @@ fun CartScreen(viewModel: MainViewModel, onNavigate: (String) -> Unit) {
                                 strokeWidth = 2.dp
                             )
                         } else {
-                            Text("Place Order", style = MaterialTheme.typography.titleMedium)
+                            Text(
+                                "Place Order",
+                                style = MaterialTheme.typography.labelLarge
+                            )
                         }
                     }
                 }

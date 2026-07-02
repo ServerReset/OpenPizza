@@ -13,7 +13,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.openpizza.app.viewmodel.MainViewModel
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(viewModel: MainViewModel, onNavigate: (String) -> Unit) {
     val cart by viewModel.cart.collectAsState()
@@ -24,12 +23,19 @@ fun HomeScreen(viewModel: MainViewModel, onNavigate: (String) -> Unit) {
             .padding(24.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Spacer(modifier = Modifier.height(48.dp))
+        Spacer(modifier = Modifier.height(32.dp))
 
-        Text(
-            text = "\uD83C\uDF55",
-            style = MaterialTheme.typography.displayLarge
-        )
+        Surface(
+            shape = MaterialTheme.shapes.extraLarge,
+            color = MaterialTheme.colorScheme.primaryContainer,
+            tonalElevation = 2.dp
+        ) {
+            Text(
+                text = "\uD83C\uDF55",
+                style = MaterialTheme.typography.displayLarge,
+                modifier = Modifier.padding(16.dp)
+            )
+        }
 
         Spacer(modifier = Modifier.height(16.dp))
 
@@ -63,18 +69,15 @@ fun HomeScreen(viewModel: MainViewModel, onNavigate: (String) -> Unit) {
             modifier = Modifier
                 .fillMaxWidth()
                 .weight(1f),
-            horizontalArrangement = Arrangement.spacedBy(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             items(menuItems) { item ->
-                Card(
+                ElevatedCard(
                     onClick = { onNavigate(item.route) },
                     modifier = Modifier.height(140.dp),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.surfaceContainerHighest
-                    ),
-                    shape = MaterialTheme.shapes.medium
+                    elevation = CardDefaults.elevatedCardElevation(defaultElevation = 2.dp),
+                    shape = MaterialTheme.shapes.large
                 ) {
                     Column(
                         modifier = Modifier
@@ -92,7 +95,7 @@ fun HomeScreen(viewModel: MainViewModel, onNavigate: (String) -> Unit) {
                             text = item.label,
                             style = MaterialTheme.typography.titleMedium,
                             textAlign = TextAlign.Center,
-                            fontWeight = FontWeight.Medium,
+                            fontWeight = FontWeight.SemiBold,
                             color = MaterialTheme.colorScheme.onSurface
                         )
                     }
@@ -101,16 +104,16 @@ fun HomeScreen(viewModel: MainViewModel, onNavigate: (String) -> Unit) {
         }
 
         if (cart.isNotEmpty()) {
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(12.dp))
 
-            Card(
+            ElevatedCard(
                 onClick = { onNavigate("cart") },
                 modifier = Modifier.fillMaxWidth(),
-                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
-                colors = CardDefaults.cardColors(
+                elevation = CardDefaults.elevatedCardElevation(defaultElevation = 4.dp),
+                colors = CardDefaults.elevatedCardColors(
                     containerColor = MaterialTheme.colorScheme.primaryContainer
                 ),
-                shape = MaterialTheme.shapes.medium
+                shape = MaterialTheme.shapes.large
             ) {
                 Row(
                     modifier = Modifier

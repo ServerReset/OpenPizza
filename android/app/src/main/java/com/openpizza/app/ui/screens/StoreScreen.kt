@@ -12,7 +12,6 @@ import androidx.compose.ui.unit.dp
 import com.openpizza.app.data.model.StoreInfo
 import com.openpizza.app.viewmodel.MainViewModel
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun StoreScreen(viewModel: MainViewModel, onStoreSelected: (StoreInfo) -> Unit) {
     val stores by viewModel.stores.collectAsState()
@@ -24,13 +23,13 @@ fun StoreScreen(viewModel: MainViewModel, onStoreSelected: (StoreInfo) -> Unit) 
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(16.dp)
+            .padding(horizontal = 16.dp, vertical = 8.dp)
     ) {
         Text(
             text = "Find a Store",
             style = MaterialTheme.typography.headlineMedium,
             fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.primary
+            color = MaterialTheme.colorScheme.onSurface
         )
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -41,18 +40,31 @@ fun StoreScreen(viewModel: MainViewModel, onStoreSelected: (StoreInfo) -> Unit) 
             label = { Text("Address or ZIP code") },
             modifier = Modifier.fillMaxWidth(),
             singleLine = true,
-            shape = MaterialTheme.shapes.medium
+            shape = MaterialTheme.shapes.large
         )
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        FilledTonalButton(
+        Button(
             onClick = { viewModel.searchStores(searchQuery) },
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(52.dp),
             enabled = searchQuery.isNotBlank() && !storesLoading,
-            shape = MaterialTheme.shapes.medium
+            shape = MaterialTheme.shapes.large
         ) {
-            Text("Search")
+            if (storesLoading) {
+                CircularProgressIndicator(
+                    modifier = Modifier.size(24.dp),
+                    color = MaterialTheme.colorScheme.onPrimary,
+                    strokeWidth = 2.dp
+                )
+            } else {
+                Text(
+                    "Search",
+                    style = MaterialTheme.typography.labelLarge
+                )
+            }
         }
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -73,7 +85,7 @@ fun StoreScreen(viewModel: MainViewModel, onStoreSelected: (StoreInfo) -> Unit) 
                         containerColor = MaterialTheme.colorScheme.errorContainer
                     ),
                     modifier = Modifier.fillMaxWidth(),
-                    shape = MaterialTheme.shapes.medium
+                    shape = MaterialTheme.shapes.large
                 ) {
                     Text(
                         text = storesError ?: "",
@@ -126,17 +138,16 @@ fun StoreScreen(viewModel: MainViewModel, onStoreSelected: (StoreInfo) -> Unit) 
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun StoreCard(
     store: StoreInfo,
     onClick: () -> Unit
 ) {
-    Card(
+    ElevatedCard(
         onClick = onClick,
         modifier = Modifier.fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-        shape = MaterialTheme.shapes.medium
+        elevation = CardDefaults.elevatedCardElevation(defaultElevation = 2.dp),
+        shape = MaterialTheme.shapes.large
     ) {
         Column(
             modifier = Modifier
@@ -151,8 +162,8 @@ private fun StoreCard(
                 Text(
                     text = store.name,
                     style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.primary,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.onSurface,
                     modifier = Modifier.weight(1f)
                 )
 

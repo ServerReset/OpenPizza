@@ -1,41 +1,20 @@
-@file:OptIn(ExperimentalMaterial3Api::class)
-
 package com.openpizza.app.ui.screens
 
-import androidx.compose.foundation.horizontalScroll
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.ElevatedCard
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Button
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import com.google.gson.GsonBuilder
 import com.openpizza.app.viewmodel.MainViewModel
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TrackingScreen(viewModel: MainViewModel) {
     val trackingResult by viewModel.trackingResult.collectAsState()
@@ -43,28 +22,36 @@ fun TrackingScreen(viewModel: MainViewModel) {
 
     var phone by remember { mutableStateOf("") }
 
-    val gson = remember { GsonBuilder().setPrettyPrinting().create() }
-    val jsonText = remember(trackingResult) {
-        trackingResult?.let { gson.toJson(it) } ?: ""
-    }
-
     Column(
-        modifier = Modifier.fillMaxSize().padding(16.dp),
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(horizontal = 16.dp, vertical = 8.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
+        Text(
+            text = "Track Order",
+            style = MaterialTheme.typography.headlineMedium,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.onSurface
+        )
+
         OutlinedTextField(
             value = phone,
             onValueChange = { phone = it },
             label = { Text("Phone Number") },
             modifier = Modifier.fillMaxWidth(),
             singleLine = true,
-            keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = KeyboardType.Phone)
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
+            shape = MaterialTheme.shapes.large
         )
 
-                    Button(
+        Button(
             onClick = { viewModel.trackOrder(phone) },
-            modifier = Modifier.fillMaxWidth().height(52.dp),
-            enabled = phone.isNotBlank() && !trackingLoading
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(52.dp),
+            enabled = phone.isNotBlank() && !trackingLoading,
+            shape = MaterialTheme.shapes.large
         ) {
             if (trackingLoading) {
                 CircularProgressIndicator(
@@ -73,7 +60,10 @@ fun TrackingScreen(viewModel: MainViewModel) {
                     strokeWidth = 2.dp
                 )
             } else {
-                Text("Track Order", style = MaterialTheme.typography.titleMedium)
+                Text(
+                    "Track Order",
+                    style = MaterialTheme.typography.labelLarge
+                )
             }
         }
 
@@ -86,18 +76,27 @@ fun TrackingScreen(viewModel: MainViewModel) {
                     CircularProgressIndicator()
                 }
             }
-            jsonText.isNotBlank() -> {
-                ElevatedCard(
-                    modifier = Modifier.fillMaxWidth().weight(1f)
+            trackingResult != null -> {
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f),
+                    shape = MaterialTheme.shapes.large
                 ) {
                     Column(
                         modifier = Modifier
                             .fillMaxSize()
-                            .padding(12.dp)
+                            .padding(16.dp)
                             .verticalScroll(rememberScrollState())
                     ) {
                         Text(
-                            text = jsonText,
+                            text = "Order Status",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Spacer(Modifier.height(8.dp))
+                        Text(
+                            text = trackingResult.toString(),
                             fontFamily = FontFamily.Monospace,
                             style = MaterialTheme.typography.bodySmall
                         )
@@ -110,11 +109,22 @@ fun TrackingScreen(viewModel: MainViewModel) {
                     contentAlignment = Alignment.Center
                 ) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text("\uD83D\uDCE6", fontSize = 64.sp)
-                        Spacer(Modifier.height(8.dp))
+                        Surface(
+                            shape = MaterialTheme.shapes.extraLarge,
+                            color = MaterialTheme.colorScheme.surfaceContainerHigh,
+                            modifier = Modifier.size(80.dp)
+                        ) {
+                            Box(contentAlignment = Alignment.Center) {
+                                Text(
+                                    "\uD83D\uDCE6",
+                                    style = MaterialTheme.typography.displayMedium
+                                )
+                            }
+                        }
+                        Spacer(Modifier.height(12.dp))
                         Text(
                             "Enter your phone number to track your order",
-                            style = MaterialTheme.typography.bodyLarge,
+                            style = MaterialTheme.typography.titleMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }

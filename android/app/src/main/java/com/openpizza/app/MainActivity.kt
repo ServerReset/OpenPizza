@@ -12,7 +12,7 @@ import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavDestination.Companion.hierarchy
@@ -38,14 +38,47 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-sealed class Screen(val route: String, val label: String, val icon: @Composable () -> Unit) {
-    data object Home : Screen("home", "Home", { Icon(Icons.Filled.Home, contentDescription = "Home") })
-    data object Stores : Screen("stores", "Stores", { Icon(Icons.Filled.LocationOn, contentDescription = "Stores") })
-    data object Menu : Screen("menu", "Menu", { Icon(Icons.Filled.MenuBook, contentDescription = "Menu") })
-    data object Builder : Screen("builder", "Build", { Icon(Icons.Filled.Build, contentDescription = "Builder") })
-    data object Cart : Screen("cart", "Cart", { Icon(Icons.Filled.ShoppingCart, contentDescription = "Cart") })
-    data object Tracking : Screen("tracking", "Track", { Icon(Icons.Filled.TrackChanges, contentDescription = "Track") })
-    data object Profile : Screen("profile", "Profile", { Icon(Icons.Filled.Person, contentDescription = "Profile") })
+sealed class Screen(
+    val route: String,
+    val label: String,
+    val selectedIcon: @Composable () -> Unit,
+    val unselectedIcon: @Composable () -> Unit
+) {
+    data object Home : Screen(
+        "home", "Home",
+        { Icon(Icons.Filled.Home, contentDescription = "Home") },
+        { Icon(Icons.Outlined.Home, contentDescription = "Home") }
+    )
+    data object Stores : Screen(
+        "stores", "Stores",
+        { Icon(Icons.Filled.LocationOn, contentDescription = "Stores") },
+        { Icon(Icons.Outlined.LocationOn, contentDescription = "Stores") }
+    )
+    data object Menu : Screen(
+        "menu", "Menu",
+        { Icon(Icons.Filled.MenuBook, contentDescription = "Menu") },
+        { Icon(Icons.Outlined.MenuBook, contentDescription = "Menu") }
+    )
+    data object Builder : Screen(
+        "builder", "Build",
+        { Icon(Icons.Filled.Build, contentDescription = "Builder") },
+        { Icon(Icons.Outlined.Build, contentDescription = "Builder") }
+    )
+    data object Cart : Screen(
+        "cart", "Cart",
+        { Icon(Icons.Filled.ShoppingCart, contentDescription = "Cart") },
+        { Icon(Icons.Outlined.ShoppingCart, contentDescription = "Cart") }
+    )
+    data object Tracking : Screen(
+        "tracking", "Track",
+        { Icon(Icons.Filled.TrackChanges, contentDescription = "Track") },
+        { Icon(Icons.Outlined.TrackChanges, contentDescription = "Track") }
+    )
+    data object Profile : Screen(
+        "profile", "Profile",
+        { Icon(Icons.Filled.Person, contentDescription = "Profile") },
+        { Icon(Icons.Outlined.Person, contentDescription = "Profile") }
+    )
 
     companion object {
         val bottomNavItems = listOf(Home, Menu, Builder, Cart, Tracking)
@@ -62,30 +95,36 @@ fun OpenPizzaApp() {
 
     Scaffold(
         topBar = {
-            TopAppBar(
+            CenterAlignedTopAppBar(
                 title = {
                     Text(
                         "OpenPizza",
-                        style = MaterialTheme.typography.titleLarge,
-                        color = MaterialTheme.colorScheme.primary
+                        style = MaterialTheme.typography.titleLarge
                     )
                 },
                 actions = {
                     IconButton(onClick = { navController.navigate(Screen.Profile.route) }) {
-                        Icon(Icons.Filled.Person, contentDescription = "Profile")
+                        Icon(
+                            Icons.Outlined.Person,
+                            contentDescription = "Profile"
+                        )
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceContainer
+                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.surface,
+                    titleContentColor = MaterialTheme.colorScheme.onSurface
                 )
             )
         },
         bottomBar = {
-            NavigationBar {
+            NavigationBar(
+                tonalElevation = NavigationBarDefaults.Elevation
+            ) {
                 val navBackStackEntry by navController.currentBackStackEntryAsState()
                 val currentDestination = navBackStackEntry?.destination
 
                 Screen.bottomNavItems.forEach { screen ->
+                    val selected = currentDestination?.hierarchy?.any { it.route == screen.route } == true
                     NavigationBarItem(
                         icon = {
                             BadgedBox(badge = {
@@ -93,11 +132,17 @@ fun OpenPizzaApp() {
                                     Badge { Text(cartItemCount.toString()) }
                                 }
                             }) {
-                                screen.icon()
+                                if (selected) screen.selectedIcon() else screen.unselectedIcon()
                             }
                         },
-                        label = { Text(screen.label) },
-                        selected = currentDestination?.hierarchy?.any { it.route == screen.route } == true,
+                        label = {
+                            Text(
+                                screen.label,
+                                style = MaterialTheme.typography.labelSmall
+                            )
+                        },
+                        alwaysShowLabel = true,
+                        selected = selected,
                         onClick = {
                             navController.navigate(screen.route) {
                                 popUpTo(navController.graph.findStartDestination().id) {
@@ -118,7 +163,6 @@ fun OpenPizzaApp() {
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
-                .padding(horizontal = 16.dp)
         ) {
             composable(Screen.Home.route) {
                 HomeScreen(
