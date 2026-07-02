@@ -135,10 +135,12 @@ jobs:
           "$APKSIGNER" verify --verbose "$SIGNED" || echo "VERIFY FAILED"
           echo "=== Verification Complete ==="
 
-      - name: Print APK file info
+      - name: Print APK file info and clean up intermediates
         continue-on-error: true
         run: |
           ls -lh app/build/outputs/apk/release/
+          rm -f app/build/outputs/apk/release/app-release-aligned.apk
+          rm -f app/build/outputs/apk/release/app-release-unsigned.apk
 
       - name: Upload release APK as artifact
         if: always()
