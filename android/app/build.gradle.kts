@@ -20,10 +20,10 @@ android {
 
     signingConfigs {
         create("release") {
-            storeFile = file(System.getenv("OPENPIZZA_KEYSTORE") ?: "/dev/null")
-            storePassword = System.getenv("OPENPIZZA_STORE_PASS") ?: ""
-            keyAlias = System.getenv("OPENPIZZA_KEY_ALIAS") ?: ""
-            keyPassword = System.getenv("OPENPIZZA_KEY_PASS") ?: ""
+            storeFile = file(System.getenv("KEYSTORE") ?: "/dev/null")
+            storePassword = System.getenv("STORE_PASS") ?: ""
+            keyAlias = System.getenv("KEY_ALIAS") ?: ""
+            keyPassword = System.getenv("KEY_PASS") ?: ""
         }
     }
 
