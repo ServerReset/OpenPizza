@@ -18,11 +18,21 @@ android {
         buildConfigField("String", "API_BASE_URL", "\"http://10.0.2.2:3000\"")
     }
 
+    signingConfigs {
+        create("release") {
+            storeFile = file(System.getenv("OPENPIZZA_KEYSTORE") ?: "/dev/null")
+            storePassword = System.getenv("OPENPIZZA_STORE_PASS") ?: ""
+            keyAlias = System.getenv("OPENPIZZA_KEY_ALIAS") ?: ""
+            keyPassword = System.getenv("OPENPIZZA_KEY_PASS") ?: ""
+        }
+    }
+
     buildTypes {
         release {
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+            signingConfig = signingConfigs.getByName("release")
         }
     }
 

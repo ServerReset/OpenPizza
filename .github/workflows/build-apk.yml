@@ -57,7 +57,7 @@ jobs:
       - name: Build debug APK
         run: ./gradlew assembleDebug
 
-      - name: Upload APK as artifact
+      - name: Upload debug APK as artifact
         uses: actions/upload-artifact@v4
         with:
           name: openpizza-debug-apk
@@ -65,93 +65,61 @@ jobs:
           retention-days: 30
           if-no-files-found: error
 
-      - name: Build release APK
-        run: ./gradlew assembleRelease
-
-      - name: Set up Android SDK tools (zipalign + apksigner)
-        run: |
-          ANDROID_SDK=${ANDROID_SDK_ROOT:-$ANDROID_HOME}
-          echo "ANDROID_SDK=$ANDROID_SDK" >> $GITHUB_ENV
-          BT=$(ls -d $ANDROID_SDK/build-tools/* 2>/dev/null | sort -V | tail -1)
-          echo "BUILD_TOOLS=$BT" >> $GITHUB_ENV
-          echo "Using build-tools: $BT"
-
-      - name: Zipalign + apksigner sign release APK
+      - name: Generate keystore for release signing
+        id: keystore
         env:
           KEYSTORE_BASE64: ${{ secrets.SIGNING_KEYSTORE_BASE64 }}
           KEY_ALIAS: ${{ secrets.SIGNING_KEY_ALIAS }}
           KEY_PASS: ${{ secrets.SIGNING_KEY_PASSWORD }}
           STORE_PASS: ${{ secrets.SIGNING_STORE_PASSWORD }}
         run: |
-          cd app
-          UNSIGNED="build/outputs/apk/release/app-release-unsigned.apk"
-          ALIGNED="build/outputs/apk/release/app-release-aligned.apk"
-          SIGNED="build/outputs/apk/release/app-release-signed.apk"
-
-          ZIPALIGN="$BUILD_TOOLS/zipalign"
-          APKSIGNER="$BUILD_TOOLS/apksigner"
-
-          echo "ZIPALIGN=$ZIPALIGN"
-          echo "APKSIGNER=$APKSIGNER"
-
-          # Step 1: zipalign BEFORE signing (required for Android 12+)
-          "$ZIPALIGN" -p -f -v 4 "$UNSIGNED" "$ALIGNED"
-          echo "zipalign complete"
-
-          # Step 2: Generate or use keystore
           if [ -n "$KEYSTORE_BASE64" ]; then
             echo "$KEYSTORE_BASE64" | base64 --decode > keystore.jks
-            KS_PASS="$STORE_PASS"
-            KEY_P="$KEY_PASS"
-            ALIAS="$KEY_ALIAS"
+            echo "KEYSTORE=${{ github.workspace }}/android/keystore.jks" >> $GITHUB_ENV
+            echo "KEY_ALIAS=$KEY_ALIAS" >> $GITHUB_ENV
+            echo "STORE_PASS=$STORE_PASS" >> $GITHUB_ENV
+            echo "KEY_PASS=$KEY_PASS" >> $GITHUB_ENV
           else
-            echo "No keystore secret — generating temporary one."
             KS_PASS="openpizza$(date +%s)"
             KEY_P="openpizza$(date +%s)"
-            ALIAS="openpizza"
-            keytool -genkey -v -keystore keystore.jks -alias "$ALIAS" \
+            keytool -genkey -v -keystore keystore.jks -alias openpizza \
               -keyalg RSA -keysize 2048 -validity 10000 \
               -storepass "$KS_PASS" -keypass "$KEY_P" \
               -dname "CN=OpenPizza, OU=Dev, O=OpenPizza, L=Unknown, ST=Unknown, C=US"
+            echo "KEYSTORE=${{ github.workspace }}/android/keystore.jks" >> $GITHUB_ENV
+            echo "KEY_ALIAS=openpizza" >> $GITHUB_ENV
+            echo "STORE_PASS=$KS_PASS" >> $GITHUB_ENV
+            echo "KEY_PASS=$KEY_P" >> $GITHUB_ENV
           fi
+          echo "Keystore generated at: $KEYSTORE"
+          ls -lh keystore.jks
 
-          # Step 3: Sign with apksigner (v1+v2+v3)
-          "$APKSIGNER" sign --ks keystore.jks \
-            --ks-pass "pass:$KS_PASS" \
-            --key-pass "pass:$KEY_P" \
-            --ks-key-alias "$ALIAS" \
-            --v1-signing-enabled true \
-            --v2-signing-enabled true \
-            --v3-signing-enabled true \
-            "$ALIGNED"
+      - name: Build and sign release APK (via Gradle)
+        run: ./gradlew assembleRelease
 
-          rm -f keystore.jks
-
-          # Step 4: Copy as signed output
-          cp "$ALIGNED" "$SIGNED"
-
-          # Step 5: Verify the signature
-          echo "=== Signature Verification ==="
-          "$APKSIGNER" verify --verbose "$SIGNED" || echo "VERIFY FAILED"
-          echo "=== Verification Complete ==="
-
-      - name: Print APK file info and clean up intermediates
-        continue-on-error: true
+      - name: Verify APK signature
         run: |
-          ls -lh app/build/outputs/apk/release/
-          rm -f app/build/outputs/apk/release/app-release-aligned.apk
-          rm -f app/build/outputs/apk/release/app-release-unsigned.apk
+          ANDROID_SDK=${ANDROID_SDK_ROOT:-$ANDROID_HOME}
+          APKSIGNER=$(ls $ANDROID_SDK/build-tools/*/apksigner 2>/dev/null | sort -V | tail -1)
+          APK="app/build/outputs/apk/release/app-release.apk"
+          echo "Verifying: $APK"
+          "$APKSIGNER" verify --verbose "$APK"
+          ls -lh "$APK"
+
+      - name: Rename release APK for clarity
+        run: |
+          cp app/build/outputs/apk/release/app-release.apk app/build/outputs/apk/release/OpenPizza-release.apk
 
       - name: Upload release APK as artifact
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: openpizza-release-apk
-          path: android/app/build/outputs/apk/release/*.apk
+          path: android/app/build/outputs/apk/release/OpenPizza-release.apk
           retention-days: 30
           if-no-files-found: warn
 
-      - name: Rename debug APK for install compatibility
+      - name: Rename debug APK
         if: always()
         run: |
           cp app/build/outputs/apk/debug/app-debug.apk app/build/outputs/apk/debug/OpenPizza-debug.apk
@@ -171,10 +139,10 @@ jobs:
             **Branch:** ${{ github.ref_name }}
 
             ### Download & Install
-            Download the **release APK** — it's signed and ready to install.
+            Download `OpenPizza-release.apk` — signed and ready to install.
 
             ### How to install
-            1. Download `app-release-signed.apk` from the release assets below
+            1. Download `OpenPizza-release.apk` from the release assets below
             2. On your phone, open the downloaded file
             3. Tap "Install anyway" if Play Protect warns you
             4. Enjoy!
@@ -182,11 +150,15 @@ jobs:
             > ⚠️ The app needs the Express backend server running.
             > The Android app connects to `http://10.0.2.2:3000` (emulator) or your machine's LAN IP.
           files: |
-            android/app/build/outputs/apk/release/*.apk
+            android/app/build/outputs/apk/release/OpenPizza-release.apk
             android/app/build/outputs/apk/debug/OpenPizza-debug.apk
           fail_on_unmatched_files: false
           generate_release_notes: false
           prerelease: true
+
+      - name: Clean up keystore
+        if: always()
+        run: rm -f keystore.jks
 
       - name: Summarize build
         if: always()
@@ -195,5 +167,5 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "| Artifact | Size | Signed? |" >> $GITHUB_STEP_SUMMARY
           echo "|----------|------|---------|" >> $GITHUB_STEP_SUMMARY
-          echo "| Release APK | $(du -h android/app/build/outputs/apk/release/app-release-signed.apk | cut -f1) | ✅ Yes |" >> $GITHUB_STEP_SUMMARY
-          echo "| Debug APK | $(du -h android/app/build/outputs/apk/debug/app-debug.apk | cut -f1) | ✅ Yes (debug key) |" >> $GITHUB_STEP_SUMMARY
+          echo "| Release APK | $(du -h app/build/outputs/apk/release/OpenPizza-release.apk | cut -f1) | ✅ Yes (by Gradle) |" >> $GITHUB_STEP_SUMMARY
+          echo "| Debug APK | $(du -h app/build/outputs/apk/debug/app-debug.apk | cut -f1) | ✅ Yes (debug key) |" >> $GITHUB_STEP_SUMMARY
