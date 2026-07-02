@@ -21,7 +21,7 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilledButton
+import androidx.compose.material3.Button
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
@@ -337,7 +337,7 @@ fun CartScreen(viewModel: MainViewModel, onNavigate: (String) -> Unit) {
                 }
 
                 item {
-                    FilledButton(
+                    Button(
                         onClick = {
                             val customer = CustomerRequest(
                                 address = "$address, $city, $state $zip".trimStart(',', ' ').trimEnd(',', ' '),

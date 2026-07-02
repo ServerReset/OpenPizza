@@ -17,7 +17,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilledButton
+import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -61,7 +61,7 @@ fun TrackingScreen(viewModel: MainViewModel) {
             keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = KeyboardType.Phone)
         )
 
-        FilledButton(
+                    Button(
             onClick = { viewModel.trackOrder(phone) },
             modifier = Modifier.fillMaxWidth().height(52.dp),
             enabled = phone.isNotBlank() && !trackingLoading

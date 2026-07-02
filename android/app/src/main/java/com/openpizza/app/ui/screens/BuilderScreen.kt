@@ -150,7 +150,6 @@ fun BuilderScreen(viewModel: MainViewModel, onNavigate: (String) -> Unit) {
 
             Spacer(Modifier.height(16.dp))
         }
-    }
 }
 
 @Composable
